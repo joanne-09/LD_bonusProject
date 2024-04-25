@@ -18,15 +18,17 @@ using namespace std;
 class MulTerms{
 public:
     vector<string> mulT;
+    string first;
     int size = 0;
 
     MulTerms(){mulT.clear();}
     MulTerms(string temp){
         mulT.clear();
         mulT.push_back(temp);
+        first = temp;
         size = 1;
     }
-    MulTerms(vector<string> temp): mulT(temp){size = temp.size();};
+    MulTerms(vector<string> temp): mulT(temp), first(temp[0]){size = temp.size();};
 
     bool check(string ch){
         for(int i=0; i<mulT.size(); ++i){
@@ -80,6 +82,14 @@ public:
                 MulTerms temp(merge.cover[i].mulT);
 
                 temp *= mul.cover[j];
+                auto it = cover.begin();
+                for(; it != cover.end(); ++it){
+                    if(it->check_include(temp)){
+                        continue;
+                    }else if(temp.check_include(*it)){
+                        cover.erase(it);
+                    }
+                }
                 this->cover.push_back(temp);
             }
         }
@@ -88,7 +98,9 @@ public:
     }
 
     bool check_include(PTerms& ch){
-        ;
+        if(size < ch.size){
+            ;
+        }
     }
 };
 
@@ -229,8 +241,8 @@ public:
         check_cover();
 
         for(int i=0; i<term_num; i++){
-            if(check_occur[minterm[i]].cover.size() == 1){
-                string temp = check_occur[minterm[i]].cover[0].mulT[0]; //the prime
+            if(check_occur[minterm[i]].size == 1){
+                string temp = check_occur[minterm[i]].cover[0].first; //the prime
                 if(check_in_outprime(temp)) continue;
                 out_prime.push_back(temp);
 
