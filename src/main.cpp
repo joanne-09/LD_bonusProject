@@ -30,17 +30,17 @@ public:
     }
     MulTerms(vector<string> temp): mulT(temp), first(temp[0]){size = temp.size();};
 
-    bool check(string ch){
-        for(int i=0; i<mulT.size(); ++i){
-            if(ch == mulT[i]) return false;
+    void add_term(string add){
+        if(find(mulT.begin(), mulT.end(), add) == mulT.end()){
+            mulT.push_back(add);
+            size++;
         }
-        return true;
     }
 
     bool check_include(MulTerms& ch){
         // check if ch include in this
         for(auto it : ch.mulT){
-            if(!check(it)) return false;
+            if(find(mulT.begin(), mulT.end(), ch) != mulT.end()) return false;
         }
 
         return true;
@@ -48,8 +48,7 @@ public:
 
     MulTerms& operator*=(MulTerms& mul){
         for(int i=0; i<mul.mulT.size(); ++i){
-            if(check(mul.mulT[i]))
-                this->mulT.push_back(mul.mulT[i]);
+            add_term(mul.mulT[i]);
         }
 
         return *this;
@@ -65,6 +64,11 @@ public:
 
     PTerms(){cover.clear();}
     PTerms(vector<MulTerms> par): cover(par){size = par.size();};
+
+    void add_term(MulTerms add){
+        cover.push_back(add);
+        size++;
+    }
 
     PTerms& operator*=(PTerms& mul){
         PTerms merge(this->cover);
@@ -217,10 +221,8 @@ public:
             for(int j=0; j<primes; j++){
                 if(check_prime_cover(prime[j], minterm[i])){
                     MulTerms t1(minterm[i]), t2(prime[j]);
-                    check_occur[prime[j]].cover.push_back(t1);
-                    check_occur[minterm[i]].cover.push_back(t2);
-                    check_occur[minterm[i]].size ++;
-                    check_occur[prime[j]].size ++;
+                    check_occur[prime[j]].add_term(t1);
+                    check_occur[minterm[i]].add_term(t2);
                 }
             }
         }
