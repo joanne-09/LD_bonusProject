@@ -17,100 +17,14 @@ using namespace std;
 // express terms that multiply together
 class MulTerms{
 public:
-    vector<string> mulT;
-    string first;
-    int size = 0;
-
-    MulTerms(){mulT.clear();}
-    MulTerms(string temp){
-        mulT.clear();
-        mulT.push_back(temp);
-        first = temp;
-        size = 1;
-    }
-    MulTerms(vector<string> temp): mulT(temp), first(temp[0]){size = temp.size();};
-
-    void add_term(string add){
-        if(find(mulT.begin(), mulT.end(), add) == mulT.end()){
-            mulT.push_back(add);
-            size++;
-        }
-    }
-
-    bool check_include(MulTerms& ch){
-        // check if ch include in this
-        for(auto it : ch.mulT){
-            if(find(mulT.begin(), mulT.end(), ch) != mulT.end()) return false;
-        }
-
-        return true;
-    }
-
-    MulTerms& operator*=(MulTerms& mul){
-        for(int i=0; i<mul.mulT.size(); ++i){
-            add_term(mul.mulT[i]);
-        }
-
-        return *this;
-    }
+    set<string> terms;
 };
 
 
 // express MulTerms that add together and can call multiply
 class PTerms{
 public:
-    vector<MulTerms> cover;
-    int size = 0;
-
-    PTerms(){cover.clear();}
-    PTerms(vector<MulTerms> par): cover(par){size = par.size();};
-
-    void add_term(MulTerms add){
-        cover.push_back(add);
-        size++;
-    }
-
-    void clear(){
-        cover.clear();
-        size = 0;
-    }
-
-    PTerms& operator*=(PTerms& mul){
-        PTerms merge(this->cover);
-        // indicate the number of multerms
-        int size1 = this->cover.size(), size2 = mul.cover.size();
-
-        this->cover.clear();
-        if(size1 == 0){
-            *this = mul;
-            return *this;
-        }
-
-        for(int i=0; i<size1; ++i){
-            for(int j=0; j<size2; ++j){
-                MulTerms temp(merge.cover[i].mulT);
-
-                temp *= mul.cover[j];
-                auto it = cover.begin();
-                for(; it != cover.end(); ++it){
-                    if(it->check_include(temp)){
-                        continue;
-                    }else if(temp.check_include(*it)){
-                        cover.erase(it);
-                    }
-                }
-                this->cover.push_back(temp);
-            }
-        }
-
-        return *this;
-    }
-
-    bool check_include(PTerms& ch){
-        if(size < ch.size){
-            ;
-        }
-    }
+    set<MulTerms> cover;
 };
 
 
@@ -122,7 +36,8 @@ private:
     vector<string> minterm;     // store minterm
     vector<string> check_prime;
     vector<string> prime;       // prime after QM 
-    unordered_map<string, PTerms> check_occur;
+    unordered_map<string, vector<int>> prime_cover; // check prime's minterm cover
+    unordered_map<string, vector<string>> check_occur; // minterm cover
     vector<string> out_prime;   // final output prime 
 
 
@@ -225,19 +140,9 @@ public:
         for(int i=0; i<term_num; i++){
             for(int j=0; j<primes; j++){
                 if(check_prime_cover(prime[j], minterm[i])){
-                    MulTerms t1(minterm[i]), t2(prime[j]);
-                    check_occur[prime[j]].add_term(t1);
-                    check_occur[minterm[i]].add_term(t2);
+                    check_occur[minterm[i]].push_back(prime[j]);
+                    prime_cover[prime[j]].push_back(i);
                 }
-            }
-        }
-    }
-
-    void check_same_cover(){
-        for(int i=0; i<term_num; ++i){
-            for(int j=i+1; j<term_num; ++j){
-                if(check_occur[minterm[i]].size == 1) continue;
-                
             }
         }
     }
@@ -248,16 +153,15 @@ public:
         check_cover();
 
         for(int i=0; i<term_num; i++){
-            if(check_occur[minterm[i]].size == 1){
-                string temp = check_occur[minterm[i]].cover[0].first; //the prime
+            if(check_occur[minterm[i]].size() == 1){
+                string temp = check_occur[minterm[i]][0]; //the prime
                 if(check_in_outprime(temp)) continue;
                 out_prime.push_back(temp);
 
                 //find all minterm that has covered by the prime and clear it
-                MulTerms mt(temp);
-                for(auto it : check_occur[temp].cover){
-                    check_occur[it.mulT[0]].clear();
-                    check_occur[it.mulT[0]].add_term(mt);
+                for(auto it : prime_cover[temp]){
+                    check_occur[minterm[it]].clear();
+                    check_occur[minterm[it]].push_back(temp);
                 }
             }
         }
@@ -268,31 +172,6 @@ public:
         // Finds the minimum cover of the left minterms 
         // after finding the essential prime implicants.
         if(out_prime.size() == prime.size()) return;
-
-        PTerms allCovers;
-        for(int i=0; i<term_num; i++){
-            if(check_occur[minterm[i]].size == 1) continue;
-            allCovers *= check_occur[minterm[i]];
-        }
-
-        int min_lit = 1e9, min_terms = 1e9;
-        MulTerms min_cover;
-        for(auto it : allCovers.cover){
-            int total_lit = 0, terms = it.mulT.size();
-            for(auto it1 : it.mulT){
-                total_lit += var_num - count(it1.begin(), it1.end(), '-');
-            }
-
-            if(total_lit < min_lit || (total_lit == min_lit && terms < min_terms)){
-                min_lit = total_lit;
-                min_terms = terms;
-                min_cover = it;
-            }
-        }
-
-        for(auto it : min_cover.mulT){
-            out_prime.push_back(it);
-        }
     }
 
     //done
