@@ -1,0 +1,11 @@
+@echo off
+REM run.bat
+set executable=main.exe
+set input_path=../testcases/case02.in
+set output_path=../output/case02.out
+
+
+REM Run the main executable with the provided arguments
+@echo on
+%executable% %input_path% %output_path%
+pause
