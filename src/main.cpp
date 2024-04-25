@@ -70,6 +70,11 @@ public:
         size++;
     }
 
+    void clear(){
+        cover.clear();
+        size = 0;
+    }
+
     PTerms& operator*=(PTerms& mul){
         PTerms merge(this->cover);
         // indicate the number of multerms
@@ -251,9 +256,8 @@ public:
                 //find all minterm that has covered by the prime and clear it
                 MulTerms mt(temp);
                 for(auto it : check_occur[temp].cover){
-                    check_occur[it.mulT[0]].cover.clear();
-                    check_occur[it.mulT[0]].cover.push_back(mt);
-                    check_occur[it.mulT[0]].size = 1;
+                    check_occur[it.mulT[0]].clear();
+                    check_occur[it.mulT[0]].add_term(mt);
                 }
             }
         }
@@ -291,6 +295,7 @@ public:
         }
     }
 
+    //done
     bool check_equal(){
         // check whether the out prime implicants are equal to the minterms
         // if equal, return true
