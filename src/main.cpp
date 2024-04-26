@@ -17,14 +17,15 @@ using namespace std;
 // express terms that multiply together
 class MulTerms{
 public:
-    unordered_map<string, int> terms;
+    vector<string> terms;
 
     MulTerms(){terms.clear();}
-    MulTerms(string temp){terms[temp]++;}
+    MulTerms(string temp){terms.push_back(temp);}
 
     MulTerms& operator*=(MulTerms& mul){
         for(auto it : mul.terms){
-            if(terms[it.first] == 0) terms[it.first]++;
+            if(find(terms.begin(), terms.end(), it) == terms.end())
+                terms.push_back(it);
         }
 
         return *this;
@@ -32,7 +33,8 @@ public:
 
     bool inside(MulTerms& check){
         for(auto it : terms){
-            if(check.terms[it.first] != 1) return false;
+            if(find(check.terms.begin(), check.terms.end(), it) == check.terms.end()) 
+                return false;
         }
         return true;
     }
@@ -40,9 +42,10 @@ public:
     void output(){
         cout << "Multerm output: \n";
         for(auto it : terms){
-            cout << it.first << " ";
+            cout << it << " ";
         }
         cout << endl;
+        cout << "---------------\n";
     }
 };
 
@@ -63,12 +66,7 @@ public:
     bool exist(MulTerms& check){
         for(auto it : this->cover){
             if(it.inside(check)) return true;
-            if(check.inside(it)){
-                it.terms = check.terms;
-                return true;
-            }
         }
-
         return false;
     }
 
@@ -85,9 +83,9 @@ public:
             for(auto it2 : mul.cover){
                 MulTerms t = it1;
                 t *= it2;
-                if(!this->exist(t)){
-                    cover.push_back(t);
-                }
+                
+                if(!exist(t)) cover.push_back(t);
+                this->output();
             }
         }
 
@@ -98,10 +96,11 @@ public:
         cout << "SOP output: \n";
         for(auto it1 : cover){
             for(auto it2 : it1.terms){
-                cout << it2.first << " ";
+                cout << it2 << " ";
             }
             cout << endl;
         }
+        cout << "------------------\n";
     }
 };
 
@@ -282,6 +281,7 @@ public:
             PTerms temp(check_occur[minterm[i]]);
 
             allcover *= temp;
+            allcover.output();
         }
 
         int lit_count;
@@ -289,7 +289,7 @@ public:
         for(auto it : allcover.cover){
             lit_count = 0;
             for(auto it1 : it.terms){
-                lit_count += var_num - count(it1.first.begin(), it1.first.end(), '-');
+                lit_count += var_num - count(it1.begin(), it1.end(), '-');
             }
 
             if(lit_count < min_lit || (lit_count == min_lit && min_term > it.terms.size())){
@@ -300,7 +300,7 @@ public:
         }
 
         for(auto it : min_cover.terms){
-            out_prime.push_back(it.first);
+            out_prime.push_back(it);
         }
     }
 
@@ -388,13 +388,16 @@ int main(int argc, char* argv[]){
 
     // Finds the prime implicants from the minterms.
     qm.find_prime_implicants();
+    cout << "1" << endl;
 
     // Finds essential prime implicants from the prime implicants.
     qm.find_essential_prime_implicants();
+    cout << "2" << endl;
 
     // Finds the minimum cover of the left minterms 
     // after finding the essential prime implicants.
     qm.find_min_cover();
+    cout << "3" << endl;
 
     // check whether the out prime implicants are equal to the minterms
     // Please remain vector minterm unchanged and store the result in vector out_prime before call this function
